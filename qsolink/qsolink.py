@@ -82,8 +82,6 @@ def update_qso(qso_id: int, qso: Qso, db: Session = Depends(get_db)):
             detail=f'ID {qso_id} : Does not exist'
         )
 
-    
-    qso_model = models.Qsos()
     qso_model.date = qso.date
     qso_model.timeon = qso.timeon
     qso_model.callsign = qso.callsign
