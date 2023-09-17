@@ -2,6 +2,7 @@ import models
 from database import engine, SessionLocal
 from datetime import date, time
 from fastapi import FastAPI, HTTPException, Depends
+from fastapi_versioning import VersionedFastAPI, version
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -41,11 +42,13 @@ Qsos = []
 
 
 @app.get('/')
+@version(1, 0)
 def read_api(db: Session = Depends(get_db)):
     return db.query(models.Qsos).all()
 
 
 @app.post('/')
+@version(1, 0)
 def create_qso(qso: Qso, db: Session = Depends(get_db)):
 
     qso_model = models.Qsos()
@@ -75,6 +78,7 @@ def create_qso(qso: Qso, db: Session = Depends(get_db)):
 
 
 @app.put('/{qso_id}')
+@version(1, 0)
 def update_qso(qso_id: int, qso: Qso, db: Session = Depends(get_db)):
 
     qso_model = db.query(models.Qsos).filter(models.Qsos.id == qso_id).first()
@@ -113,6 +117,7 @@ def update_qso(qso_id: int, qso: Qso, db: Session = Depends(get_db)):
 
 
 @app.delete('/{qso_id}')
+@version(1, 0)
 def delete_qso(qso_id: int, qso: Qso, db: Session = Depends(get_db)):
 
     qso_model = db.query(models.Qsos).filter(models.Qsos.id == qso_id).first()
@@ -131,3 +136,6 @@ def delete_qso(qso_id: int, qso: Qso, db: Session = Depends(get_db)):
         db.rollback()
 
     return qso
+
+
+app = VersionedFastAPI(app, default_api_version=(1, 0))
