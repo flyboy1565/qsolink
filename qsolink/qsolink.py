@@ -20,7 +20,7 @@ def get_db():
 
 
 class Qso(BaseModel):
-    date: date
+    dateon: date
     timeon: time
     callsign: str = Field(min_length=1, max_length=15)
     band: int
@@ -50,7 +50,7 @@ def read_api(db: Session = Depends(get_db)):
 def create_qso(qso: Qso, db: Session = Depends(get_db)):
 
     qso_model = models.Qsos()
-    qso_model.date = qso.date
+    qso_model.dateon = qso.dateon
     qso_model.timeon = qso.timeon
     qso_model.callsign = qso.callsign
     qso_model.band = qso.band
@@ -82,7 +82,7 @@ def update_qso(qso_id: int, qso: Qso, db: Session = Depends(get_db)):
             detail=f'ID {qso_id} : Does not exist'
         )
 
-    qso_model.date = qso.date
+    qso_model.dateon = qso.dateon
     qso_model.timeon = qso.timeon
     qso_model.callsign = qso.callsign
     qso_model.band = qso.band
