@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "qsolink"
+version = "0.1.0"
+description = ""
+authors = ["absenth <1115138+absenth@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.103.1"
+sqlalchemy = "^2.0.20"
+uvicorn = "^0.23.2"
+pytest = "^7.4.2"
+pytest-mock = "^3.11.1"
+pytest-asyncio = "^0.21.1"
+httpx = "^0.25.0"
+fastapi-versioning = "^0.10.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
