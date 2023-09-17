@@ -4,7 +4,6 @@ from datetime import date, time
 from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
-from database import engine, SessionLocal
 
 
 app = FastAPI()
@@ -67,8 +66,12 @@ def create_qso(qso: Qso, db: Session = Depends(get_db)):
     qso_model.power = qso.power
     qso_model.remarks = qso.remarks
 
-    db.add(qso_model)
-    db.commit()
+    try:
+        db.add(qso_model)
+        db.commit()
+    except Exception as e:
+        print(f"Error occurred while adding QSO to the database: {e}")
+        db.rollback()
 
 
 @app.put('/{qso_id}')
@@ -99,8 +102,13 @@ def update_qso(qso_id: int, qso: Qso, db: Session = Depends(get_db)):
     qso_model.power = qso.power
     qso_model.remarks = qso.remarks
 
-    db.add(qso_model)
-    db.commit()
+    try:
+        db.add(qso_model)
+        db.commit()
+    except Exception as e:
+        print(f"Error occurred while updating QSO in the database: {e}")
+        db.rollback()
+
     return qso
 
 
@@ -113,9 +121,13 @@ def delete_qso(qso_id: int, qso: Qso, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=404,
             detail=f'ID {qso_id} : Does not exist'
-    )
+        )
 
-    db.query(models.Qsos).filter(models.Qsos.id == qso_id).delete()
-    db.commit()
+    try:
+        db.query(models.Qsos).filter(models.Qsos.id == qso_id).delete()
+        db.commit()
+    except Exception as e:
+        print(f"Error occurred while deleting QSO from the database: {e}")
+        db.rollback()
+
     return qso
-
