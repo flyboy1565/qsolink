@@ -28,7 +28,7 @@ def client():
 
 def test_create_qso(client, test_db):
     qso_data = {
-        'date': '2022-01-01',
+        'dateon': '2022-01-01',
         'timeon': '12:00:00',
         'callsign': 'W1ABC',
         'band': 20,
