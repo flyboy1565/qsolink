@@ -16,3 +16,8 @@ $ poetry install
 ```
 $ uvicorn qsolink.qsolink:app --reload
 ```
+
+### Future Integrations
+I think integrating with a callsign lookup database like [HamDB.org](https://hamdb.org/api) or [callbook.info](https://callook.info/api_reference.php) would be fantastic.
+I should also ensure that QSOLink can post our logbook to the [QRZ Logbook](https://www.qrz.com/docs/logbook30/api) which has an API as well.
+
