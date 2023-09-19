@@ -1,5 +1,5 @@
-import models
-from database import engine, SessionLocal
+from .models import Qsos
+from .database import engine, SessionLocal, Base
 from datetime import date, time
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi_versioning import VersionedFastAPI, version
@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 
 app = FastAPI()
-models.Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=engine)
 
 
 def get_db():
@@ -37,37 +37,17 @@ class Qso(BaseModel):
     power: int
     remarks: str = Field(max_length=1500)
 
-
-Qsos = []
-
-
 @app.get('/')
 @version(1, 0)
 def read_api(db: Session = Depends(get_db)):
-    return db.query(models.Qsos).all()
+    return db.query(Qsos).all()
 
 
 @app.post('/')
 @version(1, 0)
 def create_qso(qso: Qso, db: Session = Depends(get_db)):
 
-    qso_model = models.Qsos()
-    qso_model.dateon = qso.dateon
-    qso_model.timeon = qso.timeon
-    qso_model.callsign = qso.callsign
-    qso_model.band = qso.band
-    qso_model.mode = qso.mode
-    qso_model.city = qso.city
-    qso_model.state = qso.state
-    qso_model.county = qso.county
-    qso_model.country = qso.country
-    qso_model.name = qso.name
-    qso_model.qslr = qso.qslr
-    qso_model.qsls = qso.qsls
-    qso_model.rstr = qso.rstr
-    qso_model.rsts = qso.rsts
-    qso_model.power = qso.power
-    qso_model.remarks = qso.remarks
+    qso_model = Qsos(**qso.model_dump())
 
     try:
         db.add(qso_model)
@@ -81,7 +61,7 @@ def create_qso(qso: Qso, db: Session = Depends(get_db)):
 @version(1, 0)
 def update_qso(qso_id: int, qso: Qso, db: Session = Depends(get_db)):
 
-    qso_model = db.query(models.Qsos).filter(models.Qsos.id == qso_id).first()
+    qso_model = db.query(Qsos).filter(Qsos.id == qso_id).first()
 
     if qso_model is None:
         raise HTTPException(
@@ -89,22 +69,8 @@ def update_qso(qso_id: int, qso: Qso, db: Session = Depends(get_db)):
             detail=f'ID {qso_id} : Does not exist'
         )
 
-    qso_model.dateon = qso.dateon
-    qso_model.timeon = qso.timeon
-    qso_model.callsign = qso.callsign
-    qso_model.band = qso.band
-    qso_model.mode = qso.mode
-    qso_model.city = qso.city
-    qso_model.state = qso.state
-    qso_model.county = qso.county
-    qso_model.country = qso.country
-    qso_model.name = qso.name
-    qso_model.qslr = qso.qslr
-    qso_model.qsls = qso.qsls
-    qso_model.rstr = qso.rstr
-    qso_model.rsts = qso.rsts
-    qso_model.power = qso.power
-    qso_model.remarks = qso.remarks
+    for key, value in qso.model_dump():
+        setattr(qso_model, key,value)
 
     try:
         db.add(qso_model)
@@ -120,7 +86,7 @@ def update_qso(qso_id: int, qso: Qso, db: Session = Depends(get_db)):
 @version(1, 0)
 def delete_qso(qso_id: int, qso: Qso, db: Session = Depends(get_db)):
 
-    qso_model = db.query(models.Qsos).filter(models.Qsos.id == qso_id).first()
+    qso_model = db.query(Qsos).filter(Qsos.id == qso_id).first()
 
     if qso_model is None:
         raise HTTPException(
@@ -129,7 +95,7 @@ def delete_qso(qso_id: int, qso: Qso, db: Session = Depends(get_db)):
         )
 
     try:
-        db.query(models.Qsos).filter(models.Qsos.id == qso_id).delete()
+        db.query(Qsos).filter(Qsos.id == qso_id).delete()
         db.commit()
     except Exception as e:
         print(f"Error occurred while deleting QSO from the database: {e}")
