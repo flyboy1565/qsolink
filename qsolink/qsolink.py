@@ -11,9 +11,10 @@ app = FastAPI()
 Base.metadata.create_all(bind=engine)
 
 
+# Dependency to get the SQLAlchemy session
 def get_db():
+    db = SessionLocal()
     try:
-        db = SessionLocal()
         yield db
     finally:
         db.close()
@@ -36,6 +37,7 @@ class Qso(BaseModel):
     rsts: int
     power: int
     remarks: str = Field(max_length=1500)
+
 
 @app.get('/')
 @version(1, 0)
@@ -104,4 +106,7 @@ def delete_qso(qso_id: int, qso: Qso, db: Session = Depends(get_db)):
     return qso
 
 
-app = VersionedFastAPI(app, default_api_version=(1, 0))
+app = VersionedFastAPI(app, 
+    default_api_version=(1, 0),
+    dependencies=[Depends(get_db)]    
+)

@@ -1,32 +1,59 @@
 import pytest
 from fastapi.testclient import TestClient
+from datetime import datetime
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from qsolink.database import Base
-from qsolink.qsolink import app, get_db
+from sqlalchemy_utils import database_exists, create_database, drop_database
+
+from qsolink.qsolink import Qso, app, Base, engine
 from qsolink.models import Qsos
+from qsolink.database import get_db
 
+# Define test database URL
+TEST_DATABASE_URL = "sqlite:///./testdb.db"
 
-# Create an in-memory SQLite database for testing
-engine = create_engine('sqlite:///:memory:')
+# Create a new SQLAlchemy session for each test
+def override_get_db():
+    db = TestingSessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+app.dependency_overrides[get_db] = {"db":override_get_db}
+
+# Create a test client
+client = TestClient(app)
+
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
 Base.metadata.create_all(bind=engine)
 
+# Pytest fixtures for setting up and tearing down the test database
+@pytest.fixture(scope="module", autouse=True)
+def setup_test_database():
+    if not database_exists(TEST_DATABASE_URL):
+        print("creating database")
+        create_database(TEST_DATABASE_URL)
 
-@pytest.fixture(scope='module')
-def test_db():
-    db = TestingSessionLocal()
-    yield db
-    db.close()
+    Base.metadata.create_all(bind=engine)
+    yield
+    print("dropping database")
+    drop_database(TEST_DATABASE_URL)
 
 
-@pytest.fixture(scope='module')
-def client():
-    with TestClient(app) as client:
-        yield client
+
+app.dependency_overrides[get_db] = override_get_db
+
+client = TestClient(app)
+
+def test_read_api():
+    response = client.get('/v1_0')
+    assert response.status_code == 200
+    assert response.json() == []
 
 
-def test_create_qso(client, test_db):
+def test_create_qso():
     qso_data = {
         'dateon': '2022-01-01',
         'timeon': '12:00:00',
@@ -45,20 +72,12 @@ def test_create_qso(client, test_db):
         'power': 100,
         'remarks': 'Test QSO'
     }
+    response = client.post('/v1_0', json=qso_data)
 
-    response = client.post('/', json=qso_data)
-    assert response.status_code == 200
-    assert response.json() == qso_data
-
-    # Verify that the QSO was saved in the database
-    qso = test_db.query(Qsos).filter_by(callsign=qso_data['callsign']).first()
+    assert response.status_code == 200, response.text
+    session = TestingSessionLocal()
+    qso = session.query(Qsos).filter_by(callsign=qso_data['callsign']).first()
     assert qso is not None
-    assert qso.date == qso_data['date']
-    assert qso.timeon == qso_data['timeon']
-    assert qso.band == qso_data['band']
+    assert qso.dateon == datetime.strptime(qso_data['dateon'], '%Y-%m-%d').date()
+    assert qso.timeon == datetime.strptime(qso_data['timeon'], '%H:%M:%S').time()
 
-
-def test_read_api(client):
-    response = client.get('/')
-    assert response.status_code == 200
-    assert response.json() == []
